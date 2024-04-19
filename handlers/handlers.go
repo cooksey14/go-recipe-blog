@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,7 +13,7 @@ import (
 )
 
 // Handler to get all recipes
-func GetRecipes(db *sql.DB) http.HandlerFunc {
+func ListRecipes(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Fetch all recipes from the database
 		rows, err := db.Query("SELECT id, title, ingredients, instructions FROM recipes")
@@ -53,6 +54,7 @@ func CreateRecipe(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
+		fmt.Fprintf(w, "Recipe created successfully")
 	}
 }
 

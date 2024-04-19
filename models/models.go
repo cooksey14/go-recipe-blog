@@ -1,5 +1,6 @@
 package models
 
+// Struct for DB configuration
 type Config struct {
 	DBHost     string `json:"host"`
 	DBPort     int    `json:"port"`
@@ -8,7 +9,7 @@ type Config struct {
 	DBName     string `json:"dbname"`
 }
 
-// Define a struct for recipes
+// Struct for recipes
 type Recipe struct {
 	ID           int    `json:"id"`
 	Title        string `json:"title"`

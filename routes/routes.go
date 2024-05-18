@@ -1,5 +1,3 @@
-// routes.go
-
 package routes
 
 import (
@@ -11,14 +9,14 @@ import (
 
 // SetupRoutes sets up the HTTP routes for the application
 func SetupRoutes(db *sql.DB) {
-	//List all Recipes
-	http.HandleFunc("/recipes", handlers.ListRecipes(db))
+	// List all Recipes
+	http.Handle("/recipes", handlers.HandleCORS(http.HandlerFunc(handlers.ListRecipes(db))))
 	// Get a Recipe
-	http.HandleFunc("/recipes/", handlers.GetRecipe(db))
+	http.Handle("/recipes/", handlers.HandleCORS(http.HandlerFunc(handlers.GetRecipe(db))))
 	// Create a new Recipe
-	http.HandleFunc("/recipes/create", handlers.CreateRecipe(db))
+	http.Handle("/recipes/create", handlers.HandleCORS(http.HandlerFunc(handlers.CreateRecipe(db))))
 	// Update a Recipe
-	http.HandleFunc("/recipes/update/", handlers.UpdateRecipe(db))
+	http.Handle("/recipes/update/", handlers.HandleCORS(http.HandlerFunc(handlers.UpdateRecipe(db))))
 	// Delete a Recipe
-	http.HandleFunc("/recipes/delete/", handlers.DeleteRecipe(db))
+	http.Handle("/recipes/delete/", handlers.HandleCORS(http.HandlerFunc(handlers.DeleteRecipe(db))))
 }

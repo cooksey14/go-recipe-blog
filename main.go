@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	models "github.com/cooksey14/go-recipe-blog/models"
+	"github.com/cooksey14/go-recipe-blog/models"
 	"github.com/cooksey14/go-recipe-blog/routes"
 	_ "github.com/lib/pq"
 )

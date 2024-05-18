@@ -12,10 +12,25 @@ import (
 	"github.com/cooksey14/go-recipe-blog/models"
 )
 
+// CORS middleware function to handle preflight requests
+func HandleCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, HX-Request, HX-Current-URL, HX-Target, HX-Trigger, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 // Handler to get all recipes
 func ListRecipes(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Fetch all recipes from the database
 		rows, err := db.Query("SELECT id, title, ingredients, instructions FROM recipes")
 		if err != nil {
 			http.Error(w, "Failed to fetch recipes", http.StatusInternalServerError)
@@ -32,8 +47,11 @@ func ListRecipes(db *sql.DB) http.HandlerFunc {
 			}
 			recipes = append(recipes, recipe)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(recipes)
+
+		w.Header().Set("Content-Type", "text/html")
+		for _, recipe := range recipes {
+			fmt.Fprintf(w, "<div><h2>%s</h2><p>%s</p><p>%s</p></div>", recipe.Title, recipe.Ingredients, recipe.Instructions)
+		}
 	}
 }
 
@@ -46,7 +64,6 @@ func CreateRecipe(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Insert the new recipe into the database
 		_, err := db.Exec("INSERT INTO recipes (title, ingredients, instructions) VALUES ($1, $2, $3)", recipe.Title, recipe.Ingredients, recipe.Instructions)
 		if err != nil {
 			log.Println("Failed to create recipe:", err)
@@ -61,7 +78,6 @@ func CreateRecipe(db *sql.DB) http.HandlerFunc {
 // Handler to get a recipe by ID
 func GetRecipe(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Fetch the recipe from the database by ID
 		var recipe models.Recipe
 		id := r.URL.Path[len("/recipes/"):]
 		row := db.QueryRow("SELECT id, title, ingredients, instructions FROM recipes WHERE id = $1", id)
@@ -78,7 +94,6 @@ func GetRecipe(db *sql.DB) http.HandlerFunc {
 // Handler to update a recipe by ID
 func UpdateRecipe(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Extract recipe ID from URL parameter
 		id := strings.TrimPrefix(r.URL.Path, "/recipes/update/")
 		idInt, err := strconv.Atoi(id)
 		if err != nil {
@@ -92,7 +107,6 @@ func UpdateRecipe(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Update the recipe in the database
 		_, err = db.Exec("UPDATE recipes SET title = $1, ingredients = $2, instructions = $3 WHERE id = $4", recipe.Title, recipe.Ingredients, recipe.Instructions, idInt)
 		if err != nil {
 			http.Error(w, "Failed to update recipe", http.StatusInternalServerError)
@@ -105,7 +119,6 @@ func UpdateRecipe(db *sql.DB) http.HandlerFunc {
 // Handler to delete a recipe by ID
 func DeleteRecipe(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Extract recipe ID from URL path
 		id := strings.TrimPrefix(r.URL.Path, "/recipes/delete/")
 		idInt, err := strconv.Atoi(id)
 		if err != nil {
@@ -113,7 +126,6 @@ func DeleteRecipe(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Delete the recipe from the database by ID
 		_, err = db.Exec("DELETE FROM recipes WHERE id = $1", idInt)
 		if err != nil {
 			http.Error(w, "Failed to delete recipe", http.StatusInternalServerError)

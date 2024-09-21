@@ -8,8 +8,12 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/cooksey14/go-recipe-blog/middleware"
 	"github.com/cooksey14/go-recipe-blog/models"
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // CORS middleware function to handle preflight requests
@@ -77,11 +81,90 @@ func CreateRecipe(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// SignUpUser handles user registration
+func SignUpUser(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var user models.User
+		err := json.NewDecoder(r.Body).Decode(&user)
+		if err != nil {
+			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
+
+		var exists bool
+		err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)", user.Email).Scan(&exists)
+		if err != nil {
+			http.Error(w, "Server error", http.StatusInternalServerError)
+			return
+		}
+		if exists {
+			http.Error(w, "Email already registered", http.StatusBadRequest)
+			return
+		}
+
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			http.Error(w, "Server error", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = db.Exec("INSERT INTO users (email, password_hash) VALUES ($1, $2)", user.Email, string(hashedPassword))
+		if err != nil {
+			http.Error(w, "Could not create user", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprintf(w, "User signed up successfully")
+	}
+}
+
+// LoginUser authenticates the user and returns a JWT token
+func LoginUser(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var creds models.User
+		err := json.NewDecoder(r.Body).Decode(&creds)
+		if err != nil {
+			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
+
+		var storedHash string
+		err = db.QueryRow("SELECT password_hash FROM users WHERE email = $1", creds.Email).Scan(&storedHash)
+		if err != nil {
+			http.Error(w, "User not found", http.StatusUnauthorized)
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(creds.Password))
+		if err != nil {
+			http.Error(w, "Invalid password", http.StatusUnauthorized)
+			return
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+			"email": creds.Email,
+			"exp":   time.Now().Add(72 * time.Hour).Unix(),
+		})
+
+		tokenString, err := token.SignedString(middleware.SignKey)
+		if err != nil {
+			http.Error(w, "Could not generate token", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"token": tokenString,
+		})
+	}
+}
+
 // Handler to get a recipe by ID
 func GetRecipe(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var recipe models.Recipe
-		id := r.URL.Path[len("/recipes/"):]
+		id := strings.TrimPrefix(r.URL.Path, "/recipes/")
 		row := db.QueryRow("SELECT id, title, ingredients, instructions FROM recipes WHERE id = $1", id)
 		err := row.Scan(&recipe.ID, &recipe.Title, &recipe.Ingredients, &recipe.Instructions)
 		if err != nil {
@@ -115,6 +198,7 @@ func UpdateRecipe(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "Recipe updated successfully")
 	}
 }
 
@@ -134,5 +218,6 @@ func DeleteRecipe(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "Recipe deleted successfully")
 	}
 }

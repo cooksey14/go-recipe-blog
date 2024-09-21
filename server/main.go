@@ -11,6 +11,9 @@ import (
 	"github.com/cooksey14/go-recipe-blog/models"
 	"github.com/cooksey14/go-recipe-blog/routes"
 	_ "github.com/lib/pq"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/pressly/goose/v3"
 )
 
 func main() {
@@ -37,9 +40,28 @@ func main() {
 		log.Println("Connected to the database successfully")
 	}
 
+	// Run migrations
+	runMigrations(db)
+
+	// Set up routes
 	routes.SetupRoutes(db)
 
+	// Start the server
+	log.Println("Server started on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+// runMigrations applies database migrations on startup
+func runMigrations(db *sql.DB) {
+	migrationsDir := "./migrations"
+
+	goose.SetDialect("postgres")
+
+	if err := goose.Up(db, migrationsDir); err != nil {
+		log.Fatalf("Migration failed: %v", err)
+	} else {
+		log.Println("Migrations applied successfully")
+	}
 }
 
 // Helper function to get environment variables with a default value

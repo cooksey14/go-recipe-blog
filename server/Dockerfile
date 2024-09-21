@@ -1,4 +1,4 @@
-FROM golang:1.20 AS builder
+FROM golang:1.23 AS builder
 
 WORKDIR /app
 COPY go.mod .          
@@ -8,5 +8,7 @@ COPY . .
 
 RUN go build -o server .  
 RUN ls -l /app
+RUN ls -l /app/migrations || echo "/app/migrations does not exist"
+RUN ls -l 
 
 CMD ["./server"]

@@ -13,24 +13,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// func loadConfig(filename string) (models.Config, error) {
-// 	file, err := os.Open(filename)
-// 	if err != nil {
-// 		return models.Config{}, err
-// 	}
-// 	defer file.Close()
-
-// 	var config models.Config
-// 	decoder := json.NewDecoder(file)
-// 	if err := decoder.Decode(&config); err != nil {
-// 		return models.Config{}, err
-// 	}
-
-// 	return config, nil
-// }
-
 func main() {
-	// Load configuration from environment variables or fall back to config.json
 	config := models.Config{
 		DBHost:     getEnv("DBHost", "localhost"),
 		DBPort:     getEnvAsInt("DBPort", 5432),
@@ -40,7 +23,6 @@ func main() {
 	}
 	log.Printf("Loaded configuration: %+v", config)
 
-	// Connect to the database using configuration values
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.DBHost, config.DBPort, config.DBUser, config.DBPassword, config.DBName)
 	db, err := sql.Open("postgres", connStr)
@@ -49,17 +31,14 @@ func main() {
 	}
 	defer db.Close()
 
-	// Confirm database connection
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error pinging database:", err)
 	} else {
 		log.Println("Connected to the database successfully")
 	}
 
-	// Setup HTTP routes with the database connection
 	routes.SetupRoutes(db)
 
-	// Start the server
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 

@@ -48,9 +48,11 @@ func ListRecipes(db *sql.DB) http.HandlerFunc {
 			recipes = append(recipes, recipe)
 		}
 
-		w.Header().Set("Content-Type", "text/html")
-		for _, recipe := range recipes {
-			fmt.Fprintf(w, "<div><h2>%s</h2><p>%s</p><p>%s</p></div>", recipe.Title, recipe.Ingredients, recipe.Instructions)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		if err := json.NewEncoder(w).Encode(recipes); err != nil {
+			http.Error(w, "Failed to encode recipes", http.StatusInternalServerError)
 		}
 	}
 }

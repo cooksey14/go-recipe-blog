@@ -1,8 +1,6 @@
-CREATE DATABASE recipes_db;
-
 \c recipes_db
 
-CREATE TABLE recipes (
+CREATE TABLE IF NOT EXISTS recipes (
     id SERIAL PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
     ingredients TEXT,

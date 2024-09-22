@@ -1,3 +1,3 @@
-# Recipe Blog written in Go
+# Recipe Blog
 
-Is a blog project I wrote to post recipes I want to share with others.
+Go Recipe Blog is a full stack application to share recipes with others.

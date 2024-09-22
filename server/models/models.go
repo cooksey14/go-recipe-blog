@@ -1,6 +1,6 @@
 package models
 
-// Struct for recipes
+// The Recipe struct holds metadata for a recipe
 type Recipe struct {
 	ID           int    `json:"id"`
 	Title        string `json:"title"`
@@ -8,13 +8,13 @@ type Recipe struct {
 	Instructions string `json:"instructions"`
 }
 
-// Email holds email name and address info
+// The Email struct holds name and email address
 type Email struct {
 	Name    string `json:"name,omitempty"`
 	Address string `json:"email,omitempty"`
 }
 
-// Struct for User authentication
+// The User Struct for User authentication and JWT authorization
 type User struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`

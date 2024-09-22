@@ -1,8 +1,6 @@
 module github.com/cooksey14/go-recipe-blog
 
-go 1.21.0
-
-toolchain go1.23.0
+go 1.23.0
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -14,6 +12,7 @@ require (
 )
 
 require (
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect

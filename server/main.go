@@ -2,33 +2,29 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 
-	"github.com/cooksey14/go-recipe-blog/models"
+	"github.com/cooksey14/go-recipe-blog/handlers"
 	"github.com/cooksey14/go-recipe-blog/routes"
+	"github.com/cooksey14/go-recipe-blog/store"
 	_ "github.com/lib/pq"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/joho/godotenv"
 	"github.com/pressly/goose/v3"
 )
 
 func main() {
-	config := models.Config{
-		DBHost:     getEnv("DBHost", "localhost"),
-		DBPort:     getEnvAsInt("DBPort", 5432),
-		DBUser:     getEnv("DBUser", "postgres"),
-		DBPassword: getEnv("DBPassword", "postgres"),
-		DBName:     getEnv("DBName", "recipes_db"),
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found or unable to load it")
 	}
-	log.Printf("Loaded configuration: %+v", config)
 
-	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		config.DBHost, config.DBPort, config.DBUser, config.DBPassword, config.DBName)
-	db, err := sql.Open("postgres", connStr)
+	db_conn := getEnv("DATABASE_URL")
+	db, err := sql.Open("postgres", db_conn)
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 	}
@@ -43,12 +39,19 @@ func main() {
 	// Run migrations
 	runMigrations(db)
 
+	// Initialize the store and handlers
+	store := store.NewStore(db)
+	handler := handlers.NewHandler(store)
+
 	// Set up routes
-	routes.SetupRoutes(db)
+	routes.SetupRoutes(handler)
 
 	// Start the server
-	log.Println("Server started on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal("Server failed:", err)
+	} else {
+		log.Println("Server started on :8080")
+	}
 }
 
 // runMigrations applies database migrations on startup
@@ -64,20 +67,21 @@ func runMigrations(db *sql.DB) {
 	}
 }
 
-// Helper function to get environment variables with a default value
-func getEnv(key string, defaultValue string) string {
+// Helper function to get required environment variables
+func getEnv(key string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
-	return defaultValue
+	log.Fatalf("Environment variable %s is not set", key)
+	return ""
 }
 
-// Helper function to get environment variables as an int
-func getEnvAsInt(key string, defaultValue int) int {
-	if value, exists := os.LookupEnv(key); exists {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
+// Helper function to get required integer environment variables
+func getEnvAsInt(key string) int {
+	valueStr := getEnv(key)
+	valueInt, err := strconv.Atoi(valueStr)
+	if err != nil {
+		log.Fatalf("Environment variable %s must be an integer", key)
 	}
-	return defaultValue
+	return valueInt
 }

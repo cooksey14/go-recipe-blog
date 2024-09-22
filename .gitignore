@@ -1,3 +1,4 @@
 config.json
 .DS_Store
 /server/middleware/*key
+/server/.env

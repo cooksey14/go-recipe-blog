@@ -26,11 +26,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DBHost: "db"
-      DBPort: "5432"
-      DBUser: "postgres"
-      DBPassword: "postgres"
-      DBName: "recipes_db"
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/recipes_db?sslmode=disable
     depends_on:
       db:
         condition: service_healthy

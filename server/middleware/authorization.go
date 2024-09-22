@@ -21,7 +21,7 @@ func init() {
 }
 
 func initKeys() {
-
+	// TODO move this to k8s
 	signBytes, err := os.ReadFile("middleware/private.key")
 	if err != nil {
 		log.Fatalf("Error reading private key: %v", err)
@@ -31,7 +31,7 @@ func initKeys() {
 	if err != nil {
 		log.Fatalf("Error parsing private key: %v", err)
 	}
-
+	// TODO move this to k8s
 	verifyBytes, err := os.ReadFile("middleware/public.key")
 	if err != nil {
 		log.Fatalf("Error reading public key: %v", err)
@@ -72,7 +72,6 @@ func JwtVerify(next http.Handler) http.Handler {
 			return
 		}
 
-		// Proceed to the next handler
 		next.ServeHTTP(w, r)
 	})
 }

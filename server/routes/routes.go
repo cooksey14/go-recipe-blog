@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/cooksey14/go-recipe-blog/handlers"
@@ -9,15 +8,15 @@ import (
 )
 
 // SetupRoutes sets up the HTTP routes for the application
-func SetupRoutes(db *sql.DB) {
+func SetupRoutes(handler *handlers.Handler) {
 	// Public endpoints
-	http.Handle("/signup", handlers.HandleCORS(http.HandlerFunc(handlers.SignUpUser(db))))
-	http.Handle("/login", handlers.HandleCORS(http.HandlerFunc(handlers.LoginUser(db))))
-	http.Handle("/recipes", handlers.HandleCORS(http.HandlerFunc(handlers.ListRecipes(db))))
-	http.Handle("/recipes/", handlers.HandleCORS(http.HandlerFunc(handlers.GetRecipe(db))))
+	http.Handle("/signup", handlers.HandleCORS(http.HandlerFunc(handler.SignUpUser)))
+	http.Handle("/login", handlers.HandleCORS(http.HandlerFunc(handler.LoginUser)))
+	http.Handle("/recipes", handlers.HandleCORS(http.HandlerFunc(handler.ListRecipes)))
+	http.Handle("/recipes/", handlers.HandleCORS(http.HandlerFunc(handler.GetRecipe)))
 
 	// Protected endpoints
-	http.Handle("/recipes/create", handlers.HandleCORS(middleware.JwtVerify(http.HandlerFunc(handlers.CreateRecipe(db)))))
-	http.Handle("/recipes/update/", handlers.HandleCORS(middleware.JwtVerify(http.HandlerFunc(handlers.UpdateRecipe(db)))))
-	http.Handle("/recipes/delete/", handlers.HandleCORS(middleware.JwtVerify(http.HandlerFunc(handlers.DeleteRecipe(db)))))
+	http.Handle("/recipes/create", handlers.HandleCORS(middleware.JwtVerify(http.HandlerFunc(handler.CreateRecipe))))
+	http.Handle("/recipes/update/", handlers.HandleCORS(middleware.JwtVerify(http.HandlerFunc(handler.UpdateRecipe))))
+	http.Handle("/recipes/delete/", handlers.HandleCORS(middleware.JwtVerify(http.HandlerFunc(handler.DeleteRecipe))))
 }

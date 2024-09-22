@@ -4,26 +4,21 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/cooksey14/go-recipe-blog/handlers"
+	"github.com/cooksey14/go-recipe-blog/middleware"
 	"github.com/cooksey14/go-recipe-blog/routes"
 	"github.com/cooksey14/go-recipe-blog/store"
+
 	_ "github.com/lib/pq"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/joho/godotenv"
 	"github.com/pressly/goose/v3"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found or unable to load it")
-	}
-
-	db_conn := getEnv("DATABASE_URL")
+	middleware.LoadEnvConfig()
+	db_conn := middleware.GetEnv("DATABASE_URL")
 	db, err := sql.Open("postgres", db_conn)
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
@@ -65,23 +60,4 @@ func runMigrations(db *sql.DB) {
 	} else {
 		log.Println("Migrations applied successfully")
 	}
-}
-
-// Helper function to get required environment variables
-func getEnv(key string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	log.Fatalf("Environment variable %s is not set", key)
-	return ""
-}
-
-// Helper function to get required integer environment variables
-func getEnvAsInt(key string) int {
-	valueStr := getEnv(key)
-	valueInt, err := strconv.Atoi(valueStr)
-	if err != nil {
-		log.Fatalf("Environment variable %s must be an integer", key)
-	}
-	return valueInt
 }

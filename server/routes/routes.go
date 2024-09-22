@@ -14,6 +14,7 @@ func SetupRoutes(handler *handlers.Handler) {
 	http.Handle("/login", handlers.HandleCORS(http.HandlerFunc(handler.LoginUser)))
 	http.Handle("/recipes", handlers.HandleCORS(http.HandlerFunc(handler.ListRecipes)))
 	http.Handle("/recipes/", handlers.HandleCORS(http.HandlerFunc(handler.GetRecipe)))
+	http.Handle("/send/email", handlers.HandleCORS(http.HandlerFunc(handler.SendEmail)))
 
 	// Protected endpoints
 	http.Handle("/recipes/create", handlers.HandleCORS(middleware.JwtVerify(http.HandlerFunc(handler.CreateRecipe))))

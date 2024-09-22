@@ -8,7 +8,7 @@ type Recipe struct {
 	Instructions string `json:"instructions"`
 }
 
-// Struct to send Emails
+// Email holds email name and address info
 type Email struct {
 	Name    string `json:"name,omitempty"`
 	Address string `json:"email,omitempty"`

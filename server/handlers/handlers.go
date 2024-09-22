@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/cooksey14/go-recipe-blog/middleware"
 	"github.com/cooksey14/go-recipe-blog/models"
+	"github.com/cooksey14/go-recipe-blog/sendgrid"
 	"github.com/cooksey14/go-recipe-blog/store"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
@@ -123,6 +125,43 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"token": tokenString,
 	})
+}
+
+// SendEmail handler
+func (h *Handler) SendEmail(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	var emailReq models.Email
+	err = json.Unmarshal(body, &emailReq)
+	if err != nil {
+		http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+
+	if emailReq.Address == "" || emailReq.Name == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	err = sendgrid.SendgridSendEmail(emailReq.Address, emailReq.Name)
+	if err != nil {
+		log.Printf("Error sending email: %v", err)
+		http.Error(w, "Failed to send email", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Email sent successfully")
 }
 
 // GetRecipe handler
